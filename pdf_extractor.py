@@ -1,7 +1,7 @@
-# Import the required Module
-import tabula
-import csv
+# Import the required modules
+import pdfplumber
 import tkinter as tk
+import pandas as pd
 from tkinter import filedialog
 
 # Create a Tkinter root window
@@ -13,37 +13,25 @@ root.withdraw()
 # Open the file browser window to select the PDF
 file_path = filedialog.askopenfilename()
 
-# Read a PDF File
-df = tabula.read_pdf(file_path, pages='all')[0]
-
-# Open the file browser window to select the output directory for the CSV file
-output_directory = filedialog.askdirectory()
-
-# Prompt the user to enter the name of the CSV file
-csv_file_name = input("Enter the name of the CSV file (without the '.csv' extension): ")
-
-# Construct the full file path for the CSV file
-csv_file_path = f"{output_directory}\\{csv_file_name}.csv"
-
-# Convert the PDF to a CSV file
-tabula.convert_into(file_path, csv_file_path, output_format="csv", pages='all')
-
-# Read the CSV file into a list of rows
-rows = []
-with open(csv_file_path, 'r', newline='') as csv_file:
-    reader = csv.reader(csv_file)
-    for row in reader:
-        # Split the text in each cell into separate columns based on the number of spaces
-        columns = [column for column in row[0].split("  ") if column]
-        rows.append(columns)
-
-# Write the modified rows to the CSV file
-with open(csv_file_path, 'w', newline='') as csv_file:
-    writer = csv.writer(csv_file)
-    for row in rows:
-        writer.writerow(row)
+# Open the pdf file
+with pdfplumber.open(file_path) as pdf:
+    # Read the first page
+    page = pdf.pages[0]
+    # Extract the table
+    table = page.extract_table()
+    # Create a DataFrame from the table
+    df = pd.DataFrame(table[1:], columns=table[0])
+    # Open the file browser window to select the output directory for the Excel file
+    output_directory = filedialog.askdirectory()
+    # Prompt the user to enter the name of the Excel file
+    excel_file_name = input("Enter the name of the Excel file (without the '.xlsx' extension): ")
+    # Construct the full file path for the Excel file
+    excel_file_path = f"{output_directory}\\{excel_file_name}.xlsx"
+    df.to_excel(excel_file_path, index=False)
 
 print(df)
+
+
 
 
 
